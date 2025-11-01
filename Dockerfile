@@ -15,4 +15,4 @@ RUN poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR
 
 COPY . .
 
-CMD ["poetry", "run", "hypercorn", "src.main:app", "--bind", "::"]
+CMD ["poetry", "run", "hypercorn", "src.api.main:app", "--bind", "::"]
