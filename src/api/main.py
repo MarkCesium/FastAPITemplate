@@ -14,8 +14,10 @@ from src.api.exception_handlers import (
     sqlalchemy_exception_handler,
 )
 from src.core.config import BASE_DIR, settings
-from src.core.db import db_helper
 from src.core.exceptions.database import DatabaseException
+from src.infrastructure.cache import close_redis, init_redis
+from src.infrastructure.db import database_helper
+from src.infrastructure.http_client.http_api_client import http_factory
 
 
 def generate_openapi_file(app: FastAPI) -> None:
@@ -46,9 +48,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, FastAPI]:
         datefmt=settings.logging.date_format,
     )
     generate_openapi_file(app)
+    init_redis()
+
     yield
 
-    await db_helper.dispose()
+    await http_factory.close()
+    await database_helper.dispose()
+    await close_redis()
 
 
 app = FastAPI(

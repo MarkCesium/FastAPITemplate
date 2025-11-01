@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
 from src.core.config import PostgresConfig, settings
 
 
-class DataBaseHelper:
+class DatabaseHelper:
     def __init__(self, config: PostgresConfig) -> None:
         self.engine = create_async_engine(
             url=str(config.url),
@@ -22,14 +22,14 @@ class DataBaseHelper:
             pool_pre_ping=config.pool_pre_ping,
             pool_timeout=config.pool_timeout,
         )
-        self.async_session_factory = async_sessionmaker(
+        self.async_session_factory = async_sessionmaker[AsyncSession](
             bind=self.engine,
             autoflush=False,
             autocommit=False,
             expire_on_commit=False,
         )
 
-        self.async_scoped_factory = async_scoped_session(
+        self.async_scoped_factory = async_scoped_session[AsyncSession](
             self.async_session_factory,
             scopefunc=asyncio.current_task,
         )
@@ -37,11 +37,13 @@ class DataBaseHelper:
     async def dispose(self) -> None:
         await self.engine.dispose()
 
-    async def async_session_dependency(self) -> AsyncGenerator[AsyncSession, None]:
+    async def async_session_dependency(
+        self,
+    ) -> AsyncGenerator[AsyncSession, None]:
         async with self.async_scoped_factory() as session:
             yield session
 
 
-db_helper = DataBaseHelper(
+database_helper = DatabaseHelper(
     settings.database,
 )

@@ -28,10 +28,6 @@ class LoggingConfig(BaseModel):
 
 class PostgresConfig(BaseModel):
     url: PostgresDsn
-    user: str
-    password: str
-    host: str
-    name: str
     echo: bool = False
     echo_pool: bool = False
     pool_size: int = 50
@@ -39,19 +35,9 @@ class PostgresConfig(BaseModel):
     pool_pre_ping: bool = True
     pool_timeout: int = 30
 
-    @property
-    def migrations_url(self) -> str:
-        return (
-            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}/{self.name}"
-        )
-
 
 class RedisConfig(BaseModel):
     url: RedisDsn
-    host: str
-    user: str
-    password: str
-    user_password: str
 
 
 class AppConfig(BaseModel):
