@@ -46,3 +46,9 @@ A production-ready FastAPI template for quick project setup with best practices 
 - Scalable project structure
 - Ready for microservices architecture
 - Railway deployment ready
+
+## TODO's
+- [ ] Migrate from poetry to uv
+- [ ] Implement app fabric pattern
+- [ ] Add infrastrucutre tests
+- [ ] Improve error handling
