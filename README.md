@@ -48,7 +48,7 @@ A production-ready FastAPI template for quick project setup with best practices 
 - Railway deployment ready
 
 ## TODO's
-- [ ] Migrate from poetry to uv
+- [x] Migrate from poetry to uv
 - [ ] Implement app fabric pattern
 - [ ] Add infrastrucutre tests
 - [ ] Improve error handling
