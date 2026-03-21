@@ -2,7 +2,7 @@ import logging
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, PostgresDsn, RedisDsn
+from pydantic import BaseModel, Field, PostgresDsn
 from pydantic_settings import BaseSettings
 
 BASE_DIR = Path(__file__).parent.parent.parent
@@ -15,11 +15,11 @@ class LoggingConfig(BaseModel):
         "warning",
         "error",
         "critical",
-    ] = "info"
-    format: str = (
-        "[%(asctime)s.%(msecs)03d] %(module)10s:%(lineno)-3d %(levelname)-7s - %(message)s"
+    ] = Field(default="info")
+    format: str = Field(
+        default="[%(asctime)s.%(msecs)03d] %(module)10s:%(lineno)-3d %(levelname)-7s - %(message)s"
     )
-    date_format: str = "%Y-%m-%d %H:%M:%S"
+    date_format: str = Field(default="%Y-%m-%d %H:%M:%S")
 
     @property
     def level_value(self) -> int:
@@ -27,30 +27,26 @@ class LoggingConfig(BaseModel):
 
 
 class PostgresConfig(BaseModel):
-    url: PostgresDsn
-    echo: bool = False
-    echo_pool: bool = False
-    pool_size: int = 50
-    max_overflow: int = 10
-    pool_pre_ping: bool = True
-    pool_timeout: int = 30
-
-
-class RedisConfig(BaseModel):
-    url: RedisDsn
+    url: PostgresDsn = Field(...)
+    echo: bool = Field(default=False)
+    echo_pool: bool = Field(default=False)
+    pool_size: int = Field(default=10)
+    max_overflow: int = Field(default=5)
+    pool_pre_ping: bool = Field(default=True)
+    pool_timeout: int = Field(default=30)
 
 
 class AppConfig(BaseModel):
-    debug: bool = False
-    generate_openapi_file: bool = True
-    openapi_file_path: str = "var/app/openapi.json"
+    debug: bool = Field(default=False)
+    generate_openapi_file: bool = Field(default=True)
+    openapi_file_path: str = Field(default="var/app/openapi.json")
+    allowed_origins: list[str] = Field(default=["http://localhost"])
 
 
 class Settings(BaseSettings):
-    app: AppConfig
-    logging: LoggingConfig
-    database: PostgresConfig
-    redis: RedisConfig
+    app: AppConfig = Field(...)
+    logging: LoggingConfig = Field(...)
+    database: PostgresConfig = Field(...)
 
     class Config:
         env_file = BASE_DIR / ".env"
@@ -58,4 +54,4 @@ class Settings(BaseSettings):
         env_nested_delimiter = "__"
 
 
-settings = Settings()  # type: ignore
+settings = Settings()  # type: ignore[call-arg]

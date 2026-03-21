@@ -1,55 +1,32 @@
 import logging
 
-from fastapi import Request
-from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import FastAPI, Request
+from fastapi.responses import ORJSONResponse
 
-from src.core.exceptions.database import DatabaseException
+from src.core.exceptions import NotFoundError, ValidationError
 
 logger = logging.getLogger(__name__)
 
 
-async def database_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Обработчик для кастомных ошибок работы с БД"""
-    if isinstance(exc, DatabaseException):
-        logger.warning(f"Database exception on {request.url}: {str(exc)}")
-        return JSONResponse(
-            status_code=getattr(exc, "status_code", 500),
-            content={
-                "detail": str(exc),
-                "type": "database_error",
-                "path": str(request.url.path),
-            },
+def register_exception_handlers(app: FastAPI) -> None:
+    @app.exception_handler(NotFoundError)
+    async def not_found_handler(request: Request, exc: NotFoundError) -> ORJSONResponse:
+        return ORJSONResponse(
+            status_code=404,
+            content={"detail": exc.message},
         )
-    # Если ошибка не относится к DatabaseException, пробрасываем дальше
-    raise exc
 
+    @app.exception_handler(ValidationError)
+    async def validation_handler(request: Request, exc: ValidationError) -> ORJSONResponse:
+        return ORJSONResponse(
+            status_code=400,
+            content={"detail": exc.message},
+        )
 
-async def sqlalchemy_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
-    """Обработчик для необработанных ошибок SQLAlchemy"""
-    if isinstance(exc, SQLAlchemyError):
-        logger.error(f"Unhandled SQLAlchemy error on {request.url}: {str(exc)}")
-        return JSONResponse(
+    @app.exception_handler(Exception)
+    async def generic_handler(request: Request, exc: Exception) -> ORJSONResponse:
+        logger.error("Unhandled exception: %s", exc, exc_info=True)
+        return ORJSONResponse(
             status_code=500,
-            content={
-                "detail": "Internal database error occurred",
-                "type": "internal_error",
-                "path": str(request.url.path),
-            },
+            content={"detail": "Internal server error"},
         )
-    raise exc
-
-
-async def general_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Глобальный обработчик для всех необработанных исключений"""
-    logger.error(f"Unhandled exception on {request.url}: {str(exc)}", exc_info=True)
-    return JSONResponse(
-        status_code=500,
-        content={
-            "detail": "Internal server error",
-            "type": "internal_error",
-            "path": str(request.url.path),
-        },
-    )

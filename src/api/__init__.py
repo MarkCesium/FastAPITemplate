@@ -1,5 +1,5 @@
 from fastapi import APIRouter
 
-api_router = APIRouter(prefix="/api")
+router = APIRouter(prefix="/api")
 
-__all__ = ("api_router",)
+__all__ = ("router",)

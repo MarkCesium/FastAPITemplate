@@ -19,8 +19,9 @@ migration:
 	alembic revision --autogenerate -m '${msg}'
 
 format:
-	ruff check --fix
+	uv run ruff check --fix .
+	uv run ruff format .
 
 check:
-	ruff check src
-	mypy -p src
+	uv run ruff check src
+	uv run mypy src

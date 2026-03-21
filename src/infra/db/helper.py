@@ -1,14 +1,10 @@
-import asyncio
-from typing import AsyncGenerator
-
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
-    async_scoped_session,
     async_sessionmaker,
     create_async_engine,
 )
 
-from src.core.config import PostgresConfig, settings
+from src.core.config import PostgresConfig
 
 
 class DatabaseHelper:
@@ -29,21 +25,5 @@ class DatabaseHelper:
             expire_on_commit=False,
         )
 
-        self.async_scoped_factory = async_scoped_session[AsyncSession](
-            self.async_session_factory,
-            scopefunc=asyncio.current_task,
-        )
-
     async def dispose(self) -> None:
         await self.engine.dispose()
-
-    async def async_session_dependency(
-        self,
-    ) -> AsyncGenerator[AsyncSession, None]:
-        async with self.async_scoped_factory() as session:
-            yield session
-
-
-database_helper = DatabaseHelper(
-    settings.database,
-)
