@@ -21,6 +21,8 @@ dependencies = [
 dev = [
     "ruff",
     "mypy",
+    "pytest",
+    "pytest-asyncio",
 ]
 
 [tool.uv]
@@ -51,3 +53,7 @@ known-first-party = ["src"]
 [tool.mypy]
 python_version = "3.14"
 strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
