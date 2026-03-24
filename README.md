@@ -33,6 +33,8 @@ A production-ready FastAPI template with clean architecture, dishka DI, and mode
 - **Python 3.14+** — PEP 695 generics (`class Foo[T]: ...`)
 - **Docker Compose** — Separate dev/prod configs with PostgreSQL
 - **Docker** — Multi-stage build with uv, nonroot user, auto-migrations
+- **CI** — GitHub Actions (ruff + mypy on PR)
+- **pytest** + **pytest-asyncio** — Test scaffold ready
 - **Ruff** — Linter + formatter (line-length 100)
 - **mypy** — Strict mode
 
@@ -51,6 +53,7 @@ A production-ready FastAPI template with clean architecture, dishka DI, and mode
     ├── pyproject.toml
     ├── alembic.ini
     ├── migrations/
+    ├── tests/                       # Test scaffold
     └── src/
         ├── main.py                  # FastAPI app, lifespan, dishka setup
         ├── api/
@@ -82,11 +85,11 @@ A production-ready FastAPI template with clean architecture, dishka DI, and mode
 
 ```bash
 # Dev environment with Docker
+cp .env.template .env
 cp backend/.env.template backend/.env
 # fill in DATABASE__URL and POSTGRES_* vars
 
-make build
-make run
+make dev
 ```
 
 ```bash
@@ -101,13 +104,13 @@ uv run hypercorn src.main:app --bind ::
 ## Makefile
 
 ```
-make build       # docker compose build (dev)
-make run         # docker compose up (dev)
-make build-prod  # docker compose build (prod)
-make run-prod    # docker compose up -d (prod)
+make dev         # docker compose up --build (dev, hot-reload)
+make prod        # docker compose up --build (prod)
 make down        # docker compose down
+make logs        # docker compose logs -f
 make migrate     # alembic upgrade head
 make migration   # alembic revision --autogenerate -m '...'
 make format      # ruff check --fix + ruff format
 make check       # ruff check + mypy
+make test        # pytest tests/ -v
 ```
