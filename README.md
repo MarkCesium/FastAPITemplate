@@ -19,7 +19,6 @@ A production-ready FastAPI template with clean architecture, dishka DI, and mode
 - **Connection Pooling** — Configurable pool with health checks
 
 ### API
-- **FastAPI** with `ORJSONResponse` for high-performance JSON
 - **Centralized Exception Handlers** — `register_exception_handlers(app)`
 - **CORS** — Configurable allowed origins
 - **OpenAPI** — Auto-generated JSON schema on startup

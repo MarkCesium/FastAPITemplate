@@ -14,7 +14,8 @@
 src/
 ├── main.py              # Точка входа: FastAPI app, lifespan, dishka setup
 ├── api/                 # HTTP-слой (controllers, schemas, exception handlers)
-├── core/                # Конфигурация, типы, доменные исключения, общие схемы
+├── core/                # Конфигурация, типы, доменные исключения
+├── schemas/             # Общие Pydantic-схемы (PaginatedResponse и др.)
 ├── dependencies/        # Dishka-провайдеры (ConfigProvider, DBProvider, ...)
 ├── infra/               # Инфраструктура (БД: models, repositories, helper, uow)
 └── services/            # Бизнес-логика
@@ -40,14 +41,13 @@ HTTP-интерфейс. Каждый домен — отдельная дире
 - `config.py` — `Settings(BaseSettings)` с вложенными конфигами (`AppConfig`, `PostgresConfig`, `LoggingConfig`). Загружается из `.env` с разделителем `__`
 - `exceptions.py` — доменные исключения: `AppError` → `NotFoundError`, `ValidationError`. **Не наследуются от HTTPException** — маппинг на HTTP-статусы только в `exception_handlers.py`
 - `types.py` — `IDType = uuid.UUID`, `UNSET` sentinel для patch-операций
-- `schemas/` — общие Pydantic-схемы (`PaginatedResponse[T]`)
 
 ### dependencies/
 
 Dishka DI-провайдеры. Каждый провайдер — отдельный файл.
 
 - `ConfigProvider` — `Settings` (scope: APP)
-- `DBProvider` — `DatabaseHelper` (scope: APP), `UnitOfWork` (scope: REQUEST)
+- `DBProvider` — `DatabaseHelper` (scope: APP), `UnitOfWork` (scope: REQUEST). UoW открывается через `async with` внутри провайдера и закрывается после завершения запроса — одна транзакция на весь запрос
 - При добавлении нового провайдера — зарегистрировать в `main.py` (`make_async_container`) и экспортировать через `__init__.py`
 
 Скоупы: **APP** для синглтонов (конфигурация, DB helper, HTTP-клиенты), **REQUEST** для per-request (UoW, сервисы).
@@ -59,7 +59,7 @@ Dishka DI-провайдеры. Каждый провайдер — отдель
 #### infra/db/
 
 - `helper.py` — `DatabaseHelper`: создаёт async engine и session factory
-- `uow.py` — `UnitOfWork(session_factory)`: AsyncContextManager, управляет сессией. В `__aenter__` создаёт сессию и инициализирует репозитории. В `__aexit__` коммитит при успехе, откатывает при исключении
+- `uow.py` — `UnitOfWork(session_factory)`: AsyncContextManager, управляет сессией. В `__aenter__` создаёт сессию. В `__aexit__` коммитит при успехе, откатывает при исключении. Жизненный цикл управляется `DBProvider` — сессия живёт ровно один запрос
 - `models/base.py` — `Base(DeclarativeBase)` с UUID7 PK. Все модели наследуются от `Base`
 - `models/__init__.py` — экспорт всех моделей с `__all__`
 - `repositories/base.py` — `BaseRepository[T: Base]`: generic CRUD (`get_by_id`, `find`, `get_all`, `get_one_or_none`, `create`, `update`, `patch`, `delete`, `count`). **Без** try/except обёрток — исключения пробрасываются естественно
@@ -74,7 +74,7 @@ Dishka DI-провайдеры. Каждый провайдер — отдель
 
 ### services/
 
-Бизнес-логика. Сервисы получают `UnitOfWork` через DI и работают с репозиториями через `async with self.uow as uow:`.
+Бизнес-логика. Сервисы получают `UnitOfWork` через DI уже открытым — сессия создана провайдером. Работа с репозиториями напрямую через `self.uow`, без `async with`.
 
 ```python
 class ExampleService:
@@ -82,11 +82,10 @@ class ExampleService:
         self.uow = uow
 
     async def get_item(self, item_id: IDType) -> Item:
-        async with self.uow as uow:
-            item = await uow.items.get_by_id(item_id)
-            if item is None:
-                raise NotFoundError(f"Item {item_id} not found")
-            return item
+        item = await self.uow.items.get_by_id(item_id)
+        if item is None:
+            raise NotFoundError(f"Item {item_id} not found")
+        return item
 ```
 
 При добавлении нового сервиса — создать dishka-провайдер в `dependencies/` (scope: REQUEST).
@@ -106,4 +105,4 @@ class ExampleService:
 - **Атомарные операции в БД:** не делать SELECT + DELETE по тем же условиям — использовать `DELETE ... RETURNING`. Два запроса создают race condition
 - **Контроллеры — тонкие:** только валидация и вызов сервиса, бизнес-логика живёт в `services/`
 - **Исключения — доменные:** бросать `NotFoundError` / `ValidationError`, а не `HTTPException`. Маппинг на HTTP-статусы — только в `exception_handlers.py`
-- **Транзакции — через UoW:** не вызывать `session.commit()` напрямую, всё через `async with self.uow`
+- **Транзакции — через UoW:** не вызывать `session.commit()` напрямую. UoW открывается один раз на запрос провайдером — сервисы используют `self.uow` без `async with`. Коммит/роллбэк происходит автоматически при завершении запроса

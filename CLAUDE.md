@@ -33,7 +33,6 @@ src/
 - **PostgreSQL 17** + SQLAlchemy 2.0 (async) + Alembic
 - **Dishka** — DI-контейнер (scopes: APP, REQUEST)
 - **Pydantic v2** + pydantic-settings (env `__` разделитель)
-- **orjson** — ORJSONResponse по умолчанию
 - **uv** — пакетный менеджер
 - **Ruff** — линтер/форматтер, **mypy** — тайпчекер (strict)
 
