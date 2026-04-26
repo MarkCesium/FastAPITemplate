@@ -6,7 +6,6 @@ from dishka import make_async_container
 from dishka.integrations.fastapi import setup_dishka
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import ORJSONResponse
 
 from src.api import router
 from src.api.exception_handlers import register_exception_handlers
@@ -37,7 +36,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
 
 app = FastAPI(
     lifespan=lifespan,
-    default_response_class=ORJSONResponse,
     debug=settings.app.debug,
     docs_url="/docs" if settings.app.debug else None,
     redoc_url=None,

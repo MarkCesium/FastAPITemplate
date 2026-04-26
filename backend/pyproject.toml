@@ -13,7 +13,6 @@ dependencies = [
     "asyncpg",
     "greenlet",
     "pydantic-settings",
-    "orjson",
     "hypercorn",
 ]
 
