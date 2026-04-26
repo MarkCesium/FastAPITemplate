@@ -14,6 +14,19 @@
 └── .env.template                    # Переменные для PostgreSQL-контейнера
 ```
 
+### backend/src/
+
+```
+src/
+├── main.py                  # FastAPI app, lifespan, dishka setup
+├── api/                     # Роутеры, exception handlers, firewall
+├── core/                    # config.py, exceptions.py, types.py
+├── schemas/                 # Pydantic-схемы (PaginatedResponse и др.)
+├── dependencies/            # Dishka providers (config, db)
+├── infra/db/                # DatabaseHelper, UnitOfWork, models, repositories
+└── services/                # Бизнес-логика
+```
+
 ## Стек
 
 - **Python 3.14+**, FastAPI, Hypercorn (ASGI)

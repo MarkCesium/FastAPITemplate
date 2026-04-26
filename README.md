@@ -64,9 +64,9 @@ A production-ready FastAPI template with clean architecture, dishka DI, and mode
         ├── core/
         │   ├── config.py            # Pydantic Settings
         │   ├── exceptions.py        # AppError, NotFoundError, ValidationError
-        │   ├── types.py             # IDType (UUID), UNSET sentinel
-        │   └── schemas/
-        │       └── base.py          # PaginatedResponse[T]
+        │   └── types.py             # IDType (UUID), UNSET sentinel
+        ├── schemas/
+        │   └── base.py              # PaginatedResponse[T]
         ├── dependencies/
         │   ├── config.py            # ConfigProvider (dishka)
         │   └── db.py                # DBProvider (dishka)
